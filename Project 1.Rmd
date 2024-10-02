@@ -19,8 +19,8 @@ library(tinytex)
 library(tidyverse)
 library(knitr)
 library(caret)
-library(corrplot)
-library(olsrr)
 ```
 
-\newpage[]
+\newpage
+
+# Start here...
