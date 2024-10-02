@@ -1,0 +1,26 @@
+---
+title: |
+    | Project 1
+    |
+    | ST 502 (601)
+    |
+    | Due October 7, 2024
+    |
+    | Authors: Rachel Hardy and Trever Yoder
+output: 
+  pdf_document:
+    toc: true
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+library(tinytex)
+library(tidyverse)
+library(knitr)
+library(caret)
+library(corrplot)
+library(olsrr)
+```
+
+\newpage[]
