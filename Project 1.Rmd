@@ -79,16 +79,13 @@ miss_above <- numeric()
 miss_below <- numeric()
 
 #Empty data frame to store all CI values
-wald_allCIs <- data.frame(matrix(ncol = 4,nrow = 0, 
-                             dimnames=list(NULL, c("n", "p", "lower", "upper"))))
-wald_allCIs <- as.matrix(wald_allCIs)
+wald_allCIs <- matrix(ncol = 4,nrow = 0, dimnames = list(NULL, c("n", "p", 
+                                                               "lower", "upper")))
 
 #Empty data frame to store properties of interest
-wald_df <- data.frame(matrix(ncol = 6,nrow = 0, 
-                             dimnames=list(NULL, c("n", "p", "avg_wdith",
-                                                   "prop_captured", "prop_below",
-                                                   "prop_above"))))
-wald_df <- as.matrix(wald_df)
+wald_df <- matrix(ncol = 6,nrow = 0, dimnames = list(NULL, c("n", "p", "avg_wdith",
+                                                     "prop_captured", "prop_below",
+                                                     "prop_above")))
 
 ############################################################################
 
@@ -159,8 +156,9 @@ for (n in n_values){
                                   prop_below, prop_above))
   }
 }
-```
 
+wald_df <- data.frame(wald_df)
+```
 
 \newpage
 
@@ -192,16 +190,13 @@ miss_above <- numeric()
 miss_below <- numeric()
 
 #Empty data frame to store all CI values
-adjwald_allCIs <- data.frame(matrix(ncol = 4,nrow = 0, 
-                             dimnames=list(NULL, c("n", "p", "lower", "upper"))))
-adjwald_allCIs <- as.matrix(adjwald_allCIs)
+adjwald_allCIs <- matrix(ncol = 4,nrow = 0, dimnames = list(NULL, c("n", "p", 
+                                                                    "lower", "upper")))
 
 #Empty data frame to store properties of interest
-adjwald_df <- data.frame(matrix(ncol = 6,nrow = 0, 
-                             dimnames=list(NULL, c("n", "p", "avg_wdith",
-                                                   "prop_captured", "prop_below",
-                                                   "prop_above"))))
-adjwald_df <- as.matrix(adjwald_df)
+adjwald_df <- matrix(ncol = 6,nrow = 0, dimnames = list(NULL, c("n", "p", "avg_wdith",
+                                                       "prop_captured", "prop_below",
+                                                       "prop_above")))
 
 ############################################################################
 
@@ -272,8 +267,9 @@ for (n in n_values){
                                         prop_below, prop_above))
   }
 }
-```
 
+adjwald_df <- data.frame(adjwald_df)
+```
 
 \newpage
 
@@ -305,16 +301,13 @@ miss_above <- numeric()
 miss_below <- numeric()
 
 #Empty data frame to store all CI values
-clopper_allCIs <- data.frame(matrix(ncol = 4,nrow = 0, 
-                             dimnames=list(NULL, c("n", "p", "lower", "upper"))))
-clopper_allCIs <- as.matrix(clopper_allCIs)
+clopper_allCIs <- matrix(ncol = 4,nrow = 0, dimnames = list(NULL, c("n", "p", 
+                                                                    "lower", "upper")))
 
 #Empty data frame to store properties of interest
-clopper_df <- data.frame(matrix(ncol = 6,nrow = 0, 
-                             dimnames=list(NULL, c("n", "p", "avg_wdith",
-                                                   "prop_captured", "prop_below",
-                                                   "prop_above"))))
-clopper_df <- as.matrix(clopper_df)
+clopper_df <- matrix(ncol = 6,nrow = 0, dimnames = list(NULL, c("n", "p", "avg_wdith",
+                                                       "prop_captured", "prop_below",
+                                                       "prop_above")))
 
 ############################################################################
 
@@ -385,15 +378,124 @@ for (n in n_values){
                                         prop_below, prop_above))
   }
 }
-```
 
+clopper_df <- data.frame(clopper_df)
+```
 
 \newpage
 
 ## (4) Score Interval
 
 ```{r}
+#############REVIEW THIS!!!!!!#############
 
+#Function for the score interval
+score_CI <- function(y, n, alpha = 0.05){
+  #Finding p_hat, i.e. the sample proportion
+  p_hat <- y/n
+  
+  #Critical value and center
+  z <- qnorm(1 - alpha/2)
+  center <- (p_hat + (z**2/(2*n)))
+  
+  #Calculate the margin of error
+  err <- z*sqrt((p_hat*(1 - p_hat) + (z**2/(4*n)))/n)
+  
+  #Calculate the lower and upper bounds
+  upper <- (center + err)/(1 + (z**2/n))
+  lower <- (center - err)/(1 + (z**2/n))
+  
+  #Return the interval
+  return(c(lower, upper))
+  
+}
+
+#Empty vectors for storage
+width_vec <- numeric()
+prop_true <- numeric()
+miss_above <- numeric()
+miss_below <- numeric()
+
+#Empty data frame to store all CI values
+score_allCIs <- matrix(ncol = 4,nrow = 0, dimnames = list(NULL, c("n", "p", 
+                                                                  "lower", "upper")))
+
+#Empty data frame to store properties of interest
+score_df <- matrix(ncol = 6,nrow = 0, dimnames = list(NULL, c("n", "p", "avg_wdith",
+                                                     "prop_captured", "prop_below",
+                                                     "prop_above")))
+
+############################################################################
+
+#Finding the CIs and properties of interest for all combinations of n and p!
+for (n in n_values){
+  for (p in p_values){
+      #Randomly generating from a binomial with n and p
+      data <- rbinom(N, size = n, prob = p)
+      
+      #For each of the 1000 random samples we will calculate a confidence interval
+      #as well as the width of the interval, whether or not the true p was
+      #captured, and if the interval missed high or low.
+      for (i in 1:N){
+        y <- data[i] 
+        CI <- score_CI(y = y, n = n, alpha = 0.05)
+        lower <- CI[1]
+        upper <- CI[2]
+        
+        #Calculating the width of each of the 1000 intervals
+        width <- (upper - lower)
+        
+        #Appending each width value to a vector
+        width_vec[i] <- width
+        
+        #Finding out if the interval captures the true p value
+        cap_truth <- ((lower < p) & (upper > p))
+        
+        #Appending each true/false value to a vector
+        prop_true[i] <- cap_truth
+        
+        ##Intervals that miss below
+        ##i.e. having an upper bound lower than p
+        
+          #Finding out if the interval misses below
+          below <- (upper < p)
+          
+          #Appending each true/false value to a vector
+          miss_below[i] <- below
+        
+        ##Intervals that miss above
+        ##i.e. having a lower bound higher than p
+        
+          #Finding out if the interval misses above
+          above <- (lower > p)
+          
+          #Appending each true/false value to a vector
+          miss_above[i] <- above
+        
+        #Storing the CI for every random sample of every
+        #combination of n and p (total of N*n*p rows)
+        score_allCIs <- rbind(score_allCIs, c(n, p, lower, upper))
+      }
+      
+      #Taking the average of the width vector
+      avg_width <- mean(width_vec)
+      
+      #Proportion of intervals that capture the truth
+      prop_captured <- mean(prop_true)
+      
+      #Proportion of intervals that miss below
+      prop_below <- mean(miss_below)
+      
+      #Proportion of intervals that miss above
+      prop_above <- mean(miss_above)
+      
+      #Storing our output into our data frame
+      score_df <- rbind(score_df, c(n, p, avg_width, prop_captured, 
+                                    prop_below, prop_above))
+  }
+}
+
+score_df <- data.frame(score_df)
 ```
 
 \newpage
