@@ -35,6 +35,16 @@ In this project, we will compare six different methods of creating confidence in
 
 # Simulations
 
+```{r}
+#Setting the seed
+set.seed(123)
+
+#Setting values for N, n, and p
+N <- 1000
+n_values <- c(15, 30, 100)
+p_values <- seq(from = 0.01, to = 0.99, length.out = 15)
+```
+
 ## (1) Wald Interval
 
 The Wald Interval is as follows:
@@ -44,15 +54,7 @@ The Wald Interval is as follows:
 \centerline{ }
 
 ```{r}
-#Setting the seed
-set.seed(123)
-
-#Setting values for N, n, and p
-N <- 1000
-n_values <- c(15, 30, 100)
-p_values <- seq(from = 0.01, to = 0.99, length.out = 15)
-
-#Function to find the Wald interval
+#Function for the Wald interval
 wald_CI <- function(y, n, alpha = 0.05){
   int<- c(y/n - qnorm(1-alpha/2)*sqrt(((y/n)*(1-(y/n)))/n),
           y/n + qnorm(1-alpha/2)*sqrt(((y/n)*(1-(y/n)))/n))
@@ -62,7 +64,7 @@ wald_CI <- function(y, n, alpha = 0.05){
     int[1] = 0
   }
   #If our upper bound is greater than 1, we will set it to be equal to 1
-  else if (int[2] > 1){
+  if (int[2] > 1){
     int[2] = 1
   }
   
@@ -165,14 +167,6 @@ for (n in n_values){
 ## (2) Adjusted Wald Interval
 
 ```{r}
-#Setting the seed
-set.seed(123)
-
-#Setting values for N, n, and p
-N <- 1000
-n_values <- c(15, 30, 100)
-p_values <- seq(from = 0.01, to = 0.99, length.out = 15)
-
 #Function for the adjusted Wald interval
 adjwald_CI <- function (y, n, alpha=0.05){
   int <- c((y+2)/(n+4) - qnorm(1-alpha/2)*sqrt(((y+2)/(n+4))*(1-((y+2)/(n+4)))/(n+4)),
@@ -183,7 +177,7 @@ adjwald_CI <- function (y, n, alpha=0.05){
     int[1] = 0
   }
   #If our upper bound is greater than 1, we will set it to be equal to 1
-  else if (int[2] > 1){
+  if (int[2] > 1){
     int[2] = 1
   }
   
@@ -285,9 +279,122 @@ for (n in n_values){
 
 ## (3) Clopper-Pearson (Exact) Interval
 
+```{r}
+#Function for the Clopper-Pearson (exact) interval
+clopper_CI <- function(y, n, alpha = 0.05){
+
+  #If y = 0, our interval will be (0,0)
+  if(y == 0){
+    return(c(0,0))
+  }
+  #If y = n, our interval will be (1,1)
+  else if(y == n){
+    return(c(1,1))
+  }
+  #If we do not have either of the two cases above, we will calculate the CI
+  else{
+    c((1 + (n-y+1)/(y*qf(alpha/2, 2*y, 2*(n-y+1))))**-1,
+      (1 + (n-y)/((y+1)*qf(1-alpha/2, 2*(y+1), 2*(n-y))))**-1)
+  }
+}
+
+#Empty vectors for storage
+width_vec <- numeric()
+prop_true <- numeric()
+miss_above <- numeric()
+miss_below <- numeric()
+
+#Empty data frame to store all CI values
+clopper_allCIs <- data.frame(matrix(ncol = 4,nrow = 0, 
+                             dimnames=list(NULL, c("n", "p", "lower", "upper"))))
+clopper_allCIs <- as.matrix(clopper_allCIs)
+
+#Empty data frame to store properties of interest
+clopper_df <- data.frame(matrix(ncol = 6,nrow = 0, 
+                             dimnames=list(NULL, c("n", "p", "avg_wdith",
+                                                   "prop_captured", "prop_below",
+                                                   "prop_above"))))
+clopper_df <- as.matrix(clopper_df)
+
+############################################################################
+
+#Finding the CIs and properties of interest for all combinations of n and p!
+for (n in n_values){
+  for (p in p_values){
+      #Randomly generating from a binomial with n and p
+      data <- rbinom(N, size = n, prob = p)
+      
+      #For each of the 1000 random samples we will calculate a confidence interval
+      #as well as the width of the interval, whether or not the true p was
+      #captured, and if the interval missed high or low.
+      for (i in 1:N){
+        y <- data[i] 
+        CI <- clopper_CI(y = y, n = n, alpha = 0.05)
+        lower <- CI[1]
+        upper <- CI[2]
+        
+        #Calculating the width of each of the 1000 intervals
+        width <- (upper - lower)
+        
+        #Appending each width value to a vector
+        width_vec[i] <- width
+        
+        #Finding out if the interval captures the true p value
+        cap_truth <- ((lower < p) & (upper > p))
+        
+        #Appending each true/false value to a vector
+        prop_true[i] <- cap_truth
+        
+        ##Intervals that miss below
+        ##i.e. having an upper bound lower than p
+        
+          #Finding out if the interval misses below
+          below <- (upper < p)
+          
+          #Appending each true/false value to a vector
+          miss_below[i] <- below
+        
+        ##Intervals that miss above
+        ##i.e. having a lower bound higher than p
+        
+          #Finding out if the interval misses above
+          above <- (lower > p)
+          
+          #Appending each true/false value to a vector
+          miss_above[i] <- above
+        
+        #Storing the CI for every random sample of every
+        #combination of n and p (total of N*n*p rows)
+        clopper_allCIs <- rbind(clopper_allCIs, c(n, p, lower, upper))
+      }
+      
+      #Taking the average of the width vector
+      avg_width <- mean(width_vec)
+      
+      #Proportion of intervals that capture the truth
+      prop_captured <- mean(prop_true)
+      
+      #Proportion of intervals that miss below
+      prop_below <- mean(miss_below)
+      
+      #Proportion of intervals that miss above
+      prop_above <- mean(miss_above)
+      
+      #Storing our output into our data frame
+      clopper_df <- rbind(clopper_df, c(n, p, avg_width, prop_captured, 
+                                        prop_below, prop_above))
+  }
+}
+```
+
+
 \newpage
 
 ## (4) Score Interval
+
+```{r}
+
+```
 
 \newpage
 
