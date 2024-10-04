@@ -48,7 +48,7 @@ The Wald Interval is as follows:
 set.seed(123)
 
 #Setting values for N, n, and p
-N <- 10
+N <- 1000
 n_values <- c(15, 30, 100)
 p_values <- seq(from = 0.01, to = 0.99, length.out = 15)
 
@@ -163,6 +163,123 @@ for (n in n_values){
 \newpage
 
 ## (2) Adjusted Wald Interval
+
+```{r}
+#Setting the seed
+set.seed(123)
+
+#Setting values for N, n, and p
+N <- 1000
+n_values <- c(15, 30, 100)
+p_values <- seq(from = 0.01, to = 0.99, length.out = 15)
+
+#Function for the adjusted Wald interval
+adjwald_CI <- function (y, n, alpha=0.05){
+  int <- c((y+2)/(n+4) - qnorm(1-alpha/2)*sqrt(((y+2)/(n+4))*(1-((y+2)/(n+4)))/(n+4)),
+           (y+2)/(n+4) + qnorm(1-alpha/2)*sqrt(((y+2)/(n+4))*(1-((y+2)/(n+4)))/(n+4)))
+  
+  #If our lower bound is less than 0, we will set it to be equal to 0
+  if (int[1] < 0){
+    int[1] = 0
+  }
+  #If our upper bound is greater than 1, we will set it to be equal to 1
+  else if (int[2] > 1){
+    int[2] = 1
+  }
+  
+  #Returning the interval
+  return(int)
+}
+
+#Empty vectors for storage
+width_vec <- numeric()
+prop_true <- numeric()
+miss_above <- numeric()
+miss_below <- numeric()
+
+#Empty data frame to store all CI values
+adjwald_allCIs <- data.frame(matrix(ncol = 4,nrow = 0, 
+                             dimnames=list(NULL, c("n", "p", "lower", "upper"))))
+adjwald_allCIs <- as.matrix(adjwald_allCIs)
+
+#Empty data frame to store properties of interest
+adjwald_df <- data.frame(matrix(ncol = 6,nrow = 0, 
+                             dimnames=list(NULL, c("n", "p", "avg_wdith",
+                                                   "prop_captured", "prop_below",
+                                                   "prop_above"))))
+adjwald_df <- as.matrix(adjwald_df)
+
+############################################################################
+
+#Finding the CIs and properties of interest for all combinations of n and p!
+for (n in n_values){
+  for (p in p_values){
+      #Randomly generating from a binomial with n and p
+      data <- rbinom(N, size = n, prob = p)
+      
+      #For each of the 1000 random samples we will calculate a confidence interval
+      #as well as the width of the interval, whether or not the true p was
+      #captured, and if the interval missed high or low.
+      for (i in 1:N){
+        y <- data[i] 
+        CI <- adjwald_CI(y = y, n = n, alpha = 0.05)
+        lower <- CI[1]
+        upper <- CI[2]
+        
+        #Calculating the width of each of the 1000 intervals
+        width <- (upper - lower)
+        
+        #Appending each width value to a vector
+        width_vec[i] <- width
+        
+        #Finding out if the interval captures the true p value
+        cap_truth <- ((lower < p) & (upper > p))
+        
+        #Appending each true/false value to a vector
+        prop_true[i] <- cap_truth
+        
+        ##Intervals that miss below
+        ##i.e. having an upper bound lower than p
+        
+          #Finding out if the interval misses below
+          below <- (upper < p)
+          
+          #Appending each true/false value to a vector
+          miss_below[i] <- below
+        
+        ##Intervals that miss above
+        ##i.e. having a lower bound higher than p
+        
+          #Finding out if the interval misses above
+          above <- (lower > p)
+          
+          #Appending each true/false value to a vector
+          miss_above[i] <- above
+        
+        #Storing the CI for every random sample of every
+        #combination of n and p (total of N*n*p rows)
+        adjwald_allCIs <- rbind(adjwald_allCIs, c(n, p, lower, upper))
+      }
+      
+      #Taking the average of the width vector
+      avg_width <- mean(width_vec)
+      
+      #Proportion of intervals that capture the truth
+      prop_captured <- mean(prop_true)
+      
+      #Proportion of intervals that miss below
+      prop_below <- mean(miss_below)
+      
+      #Proportion of intervals that miss above
+      prop_above <- mean(miss_above)
+      
+      #Storing our output into our data frame
+      adjwald_df <- rbind(adjwald_df, c(n, p, avg_width, prop_captured, 
+                                        prop_below, prop_above))
+  }
+}
+```
+
 
 \newpage
 
