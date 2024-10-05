@@ -135,7 +135,7 @@ score_CI <- function(y, n, alpha = 0.05){
 }
 ```
 
-## Raw Percentile Interval (Using a Parametric Bootstrap)
+## Raw Percent Interval (Using a Parametric Bootstrap)
 
 ```{r}
 # Function for the raw percentile interval (using parametric bootstrap)
@@ -162,20 +162,201 @@ rawboot_CI <- function(y, n, alpha = 0.05, B = 100){
     })
     
     # Calculate the raw percentile interval
-    lower <- quantile(boot_estimates, alpha/2)
-    upper <- quantile(boot_estimates, 1 - alpha/2)
-  
-    # Return the interval
-    return(c(lower, upper))
+    raw_lower <- quantile(boot_estimates, alpha/2)
+    raw_upper <- quantile(boot_estimates, 1 - alpha/2)
   }
+  
+  return(c(raw_lower, raw_upper))
 }
 ```
 
 ## Bootstrap t Interval (Using a Parametric Bootstrap)
 
 ```{r}
+###############################################################################
+###############################################################################
+# I have the function above "rawboot_CI" that works for calculating the 
+# raw percentile interval. Below I am trying to get a function working
+# that combines both the raw interval and t interval into a single 
+# function which is what the instructions say to do. So far, I haven't
+# quite been able to get it to work.
+###############################################################################
+###############################################################################
 
+boot_CI <- function(y, n, alpha = 0.05, B = 100){
+  # Finding p_hat, i.e. the sample proportion
+  p_hat <- y/n
+  
+  # If y = 0, our interval will be (0,0)
+  if(y == 0){
+    return(c(0,0))
+  }
+  # If y = n, our interval will be (1,1)
+  else if(y == n){
+    return(c(1,1))
+  }
+  # If we do not have either of the two cases above, we will calculate the CI
+  # Here, we will use a parametric bootstrap!
+  else{
+    boot_estimates <- replicate(B, {
+      data <- rbinom(1, size = n, prob = p_hat)
+      p_hat_boot <- data/n
+      
+      return(p_hat_boot)
+    })
+    
+    # Calculate the raw percentile interval
+    raw_lower <- quantile(boot_estimates, alpha/2)
+    raw_upper <- quantile(boot_estimates, 1 - alpha/2)
+    
+    # Secondary bootstrap to find SEs needed for t-statistics
+    secondary_boot <- replicate(B, {
+      data2 <- rbinom(1, size = n, prob = p_hat)
+      p_hat_boot_2 <- data2/n
+      
+      return(p_hat_boot_2)
+    })
+    
+    # Find SE for t-stat
+    se <- sd(secondary_boot)
+    
+    # Having an SE very close to 0 will cause problems for us
+    # In these cases, we can set those interval values to be 
+    # missing so we can exclude them from calculations!
+    if (se < 1e-10){
+      boot_lower <- NA
+      boot_upper <- NA
+    }
+    else{
+      # Calculate the t-statistics 
+      p_hat_boot_t <- (boot_estimates - p_hat)/se
+      
+      # Find the critical values
+      # Use "na.rm = TRUE" to EXCLUDE missing values!
+      lower_t_stat <- quantile(p_hat_boot_t, alpha/2, na.rm = TRUE)
+      upper_t_stat <- quantile(p_hat_boot_t, (1 - alpha/2), na.rm = TRUE)
+      
+      # Calculate the interval
+      boot_lower <- p_hat - upper_t_stat*se
+      boot_upper <- p_hat - lower_t_stat*se
+    }
+  }
+  
+  # Return the two different intervals!
+  return(list(
+    rawboot_int = c(raw_lower, raw_upper),
+    tboot_int = c(boot_lower, boot_upper)
+  ))
+}
+
+###############################################################################
+###############################################################################
+# THIS CODE BELOW IS ONLY FOR TESTING THE FUNCTION ABOVE BEFORE ADDING THE 
+# BOOTSTRAP T INTERVAL TO THE MONTE CARLO SECTION / NESTED LOOP !!!!!!
+# THIS IS NOT PART OF THE FINAL SUBMISSION.
+# CODE FOR ALL OTHER FIVE CI METHODS HAS BEEN COMPLETED AND IS
+# INCLUDED IN THE MONTE CARLO SIMULATION CODE. :)
+###############################################################################
+###############################################################################
+
+# Setting the seed
+set.seed(123)
+
+# Setting values for B, N, n, and p
+B <- 100
+N <- 1000
+alpha <- 0.05
+n_values <- c(15, 30, 100)
+p_values <- seq(from = 0.01, to = 0.99, length.out = 15)
+
+#Empty vectors for storage
+width_vec <- numeric()
+prop_true <- numeric()
+miss_above <- numeric()
+miss_below <- numeric()
+
+#Empty data frame to store all CI values
+tboot_allCIs <- matrix(ncol = 4,nrow = 0, dimnames = list(NULL, c("n", "p", 
+                                                                  "lower", "upper")))
+
+#Empty data frame to store properties of interest
+tboot_df <- matrix(ncol = 6,nrow = 0, dimnames = list(NULL, c("n", "p", "avg_wdith",
+                                                              "prop_captured", "prop_below",
+                                                              "prop_above")))
+
+#Finding the CIs and properties of interest for all combinations of n and p!
+for (n in n_values){
+  for (p in p_values){
+    #Randomly generating from a binomial with n and p
+    data <- rbinom(N, size = n, prob = p)
+    
+    #For each of the 1000 random samples we will calculate a confidence interval
+    #as well as the width of the interval, whether or not the true p was
+    #captured, and if the interval missed high or low.
+    for (i in 1:N){
+      y <- data[i] 
+      CI <- boot_CI(y = y, n = n, alpha = 0.05, B = 10)
+      lower <- CI[[2]][1]
+      upper <- CI[[2]][2]
+      
+      #Calculating the width of each of the 1000 intervals
+      width <- (upper - lower)
+      
+      #Appending each width value to a vector
+      width_vec[i] <- width
+      
+      #Finding out if the interval captures the true p value
+      cap_truth <- ((lower < p) & (upper > p))
+      
+      #Appending each true/false value to a vector
+      prop_true[i] <- cap_truth
+      
+      ##Intervals that miss below
+      ##i.e. having an upper bound lower than p
+      
+      #Finding out if the interval misses below
+      below <- (upper < p)
+      
+      #Appending each true/false value to a vector
+      miss_below[i] <- below
+      
+      ##Intervals that miss above
+      ##i.e. having a lower bound higher than p
+      
+      #Finding out if the interval misses above
+      above <- (lower > p)
+      
+      #Appending each true/false value to a vector
+      miss_above[i] <- above
+      
+      #Storing the CI for every random sample of every
+      #combination of n and p (total of N*n*p rows)
+      tboot_allCIs <- rbind(tboot_allCIs, c(n, p, lower, upper))
+    }
+    
+    #Taking the average of the width vector
+    avg_width <- mean(width_vec)
+    
+    #Proportion of intervals that capture the truth
+    prop_captured <- mean(prop_true)
+    
+    #Proportion of intervals that miss below
+    prop_below <- mean(miss_below)
+    
+    #Proportion of intervals that miss above
+    prop_above <- mean(miss_above)
+    
+    #Storing our output into our data frame
+    tboot_df <- rbind(tboot_df, c(n, p, avg_width, prop_captured, 
+                                  prop_below, prop_above))
+  }
+}
+
+tboot_df <- data.frame(tboot_df)
+
+######################### END OF TEST CODE #########################
 ```
+
 
 # Monte Carlo Simulation
 
@@ -430,7 +611,9 @@ adjwald_df <- data.frame(adjwald_df)
 clopper_df <- data.frame(clopper_df)
 score_df   <- data.frame(score_df)
 rawboot_df <- data.frame(rawboot_df)
+```
 
+```{r}
 ### Display first and last 5 observations of each data frame ###
 head(wald_df, n = 5)
 tail(wald_df, n = 5)
