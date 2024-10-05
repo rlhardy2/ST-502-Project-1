@@ -16,6 +16,7 @@ output:
 knitr::opts_chunk$set(echo = TRUE)
 
 library(tinytex)
+library(ggplot2)
 library(tidyverse)
 library(knitr)
 library(caret)
@@ -23,7 +24,7 @@ library(caret)
 
 \newpage
 
-# Introduction
+# Introduction & Goals of the Study
 
 In order to understand what good properties of confidence are, we will need to consider the following:
 
@@ -33,7 +34,7 @@ In order to understand what good properties of confidence are, we will need to c
 
 In this project, we will compare six different methods of creating confidence intervals for a Binomial random sample.
 
-# Functions for Creating Confidence Intervals
+# Methods & Functions for Creating Confidence Intervals
 
 ## Wald Interval
 
@@ -66,7 +67,7 @@ wald_CI <- function(y, n, alpha = 0.05){
 ## Adjusted Wald Interval
 
 ```{r}
-# Function for the adjusted Wald interval
+# Function for the Adjusted Wald interval
 adjwald_CI <- function (y, n, alpha=0.05){
   int <- c((y+2)/(n+4) - qnorm(1-alpha/2)*sqrt(((y+2)/(n+4))*(1-((y+2)/(n+4)))/(n+4)),
            (y+2)/(n+4) + qnorm(1-alpha/2)*sqrt(((y+2)/(n+4))*(1-((y+2)/(n+4)))/(n+4)))
@@ -189,7 +190,7 @@ Below is a nested loop that iterates over all 45 combinations of n and p. In thi
 set.seed(123)
 
 # Setting values for B, N, n, and p
-B <- 10
+B <- 100
 N <- 1000
 alpha <- 0.05
 n_values <- c(15, 30, 100)
@@ -244,22 +245,22 @@ tboot_allCIs   <- matrix(ncol = 4,nrow = 0, dimnames = list(NULL, c("n", "p",
 
 ### Make empty matrices for each CI method to store results ###
 
-wald_df    <- matrix(ncol = 6,nrow = 0, dimnames = list(NULL, c("n", "p", "avg_wdith",
+wald_df    <- matrix(ncol = 6,nrow = 0, dimnames = list(NULL, c("n", "p", "avg_width",
                                                      "prop_captured", "prop_below",
                                                      "prop_above")))
-adjwald_df <- matrix(ncol = 6,nrow = 0, dimnames = list(NULL, c("n", "p", "avg_wdith",
+adjwald_df <- matrix(ncol = 6,nrow = 0, dimnames = list(NULL, c("n", "p", "avg_width",
                                                        "prop_captured", "prop_below",
                                                        "prop_above")))
-clopper_df <- matrix(ncol = 6,nrow = 0, dimnames = list(NULL, c("n", "p", "avg_wdith",
+clopper_df <- matrix(ncol = 6,nrow = 0, dimnames = list(NULL, c("n", "p", "avg_width",
                                                        "prop_captured", "prop_below",
                                                        "prop_above")))
-score_df   <- matrix(ncol = 6,nrow = 0, dimnames = list(NULL, c("n", "p", "avg_wdith",
+score_df   <- matrix(ncol = 6,nrow = 0, dimnames = list(NULL, c("n", "p", "avg_width",
                                                      "prop_captured", "prop_below",
                                                      "prop_above")))
-rawboot_df <- matrix(ncol = 6,nrow = 0, dimnames = list(NULL, c("n", "p", "avg_wdith",
+rawboot_df <- matrix(ncol = 6,nrow = 0, dimnames = list(NULL, c("n", "p", "avg_width",
                                                        "prop_captured", "prop_below",
                                                        "prop_above")))
-tboot_df   <- matrix(ncol = 6,nrow = 0, dimnames = list(NULL, c("n", "p", "avg_wdith",
+tboot_df   <- matrix(ncol = 6,nrow = 0, dimnames = list(NULL, c("n", "p", "avg_width",
                                                       "prop_captured", "prop_below",
                                                       "prop_above")))
 
@@ -422,23 +423,159 @@ for (n in n_values){
   }
 }
 
-### Final results as data frames! ###
+### Final results as data frames ###
 
 wald_df    <- data.frame(wald_df)
 adjwald_df <- data.frame(adjwald_df)
 clopper_df <- data.frame(clopper_df)
 score_df   <- data.frame(score_df)
 rawboot_df <- data.frame(rawboot_df)
+
+### Display first and last 5 observations of each data frame ###
+head(wald_df, n = 5)
+tail(wald_df, n = 5)
+head(adjwald_df, n = 5)
+tail(adjwald_df, n = 5)
+head(clopper_df, n = 5)
+tail(clopper_df, n = 5)
+head(score_df, n = 5)
+tail(score_df, n = 5)
+head(rawboot_df, n = 5)
+tail(rawboot_df, n = 5)
 ```
 
+\newpage
 
+# Comparison of the Different Methods
 
+## Results & Plots for the Wald Interval
 
+Below is a plot of the coverage probabilities from the Wald interval simulation.
 
+```{r}
+ggplot(wald_df, aes(x = p, y = prop_captured)) +
+  geom_line() +
+  geom_hline(yintercept = 0.95, color = "red") +
+  annotate("text", x = 0.06, y = 0.98, label = "0.95", color = "red") +
+  facet_wrap(~n, labeller = labeller(n = function(x) paste("n =", x))) +
+  labs(title = "Wald Interval: Proportion of Intervals Capturing True p",
+       x = "p", y = "Proportion Captured") +
+  theme(legend.position="none")
+```
 
+Below is a plot of the average interval width from the Wald interval simulation.
 
+```{r}
+ggplot(wald_df, aes(x = p, y = avg_width)) +
+  geom_line() +
+  facet_wrap(~n, labeller = labeller(n = function(x) paste("n =", x))) +
+  labs(title = "Wald Interval: Average Confidence Interval Width",
+       x = "p", y = "Average Width")
+```
 
+## Results & Plots for the Adjusted Wald Interval
 
+Below is a plot of the coverage probabilities from the Adjusted Wald interval simulation.
+
+```{r}
+ggplot(adjwald_df, aes(x = p, y = prop_captured)) +
+  geom_line() +
+  geom_hline(yintercept = 0.95, color = "red") +
+  annotate("text", x = 0.05, y = 0.948, label = "0.95", color = "red") +
+  facet_wrap(~n, labeller = labeller(n = function(x) paste("n =", x))) +
+  labs(title = "Adjusted Wald Interval: Proportion of Intervals Capturing True p",
+       x = "p", y = "Proportion Captured") +
+  theme(legend.position="none")
+```
+
+Below is a plot of the average interval width from the Adjusted Wald interval simulation.
+
+```{r}
+ggplot(adjwald_df, aes(x = p, y = avg_width)) +
+  geom_line() +
+  facet_wrap(~n, labeller = labeller(n = function(x) paste("n =", x))) +
+  labs(title = "Adjusted Wald Interval: Average Confidence Interval Width",
+       x = "p", y = "Average Width")
+```
+
+## Results & Plots for the Clopper-Pearson Interval
+
+Below is a plot of the coverage probabilities from the Clopper-Pearson interval simulation.
+
+```{r}
+ggplot(clopper_df, aes(x = p, y = prop_captured)) +
+  geom_line() +
+  geom_hline(yintercept = 0.95, color = "red") +
+  annotate("text", x = 0.05, y = 0.98, label = "0.95", color = "red") +
+  facet_wrap(~n, labeller = labeller(n = function(x) paste("n =", x))) +
+  labs(title = "Clopper-Pearson Interval: Proportion of Intervals Capturing True p",
+       x = "p", y = "Proportion Captured") +
+  theme(legend.position="none")
+```
+
+Below is a plot of the average interval width from the Clopper-Pearson interval simulation.
+
+```{r}
+ggplot(clopper_df, aes(x = p, y = avg_width)) +
+  geom_line() +
+  facet_wrap(~n, labeller = labeller(n = function(x) paste("n =", x))) +
+  labs(title = "Clopper-Pearson Interval: Average Confidence Interval Width",
+       x = "p", y = "Average Width")
+```
+
+## Results & Plots for the Score Interval
+
+Below is a plot of the coverage probabilities from the Score interval simulation.
+
+```{r}
+ggplot(score_df, aes(x = p, y = prop_captured)) +
+  geom_line() +
+  geom_hline(yintercept = 0.95, color = "red") +
+  annotate("text", x = 0.05, y = 0.945, label = "0.95", color = "red") +
+  facet_wrap(~n, labeller = labeller(n = function(x) paste("n =", x))) +
+  labs(title = "Score Interval: Proportion of Intervals Capturing True p",
+       x = "p", y = "Proportion Captured") +
+  theme(legend.position="none")
+```
+
+Below is a plot of the average interval width from the Score interval simulation.
+
+```{r}
+ggplot(score_df, aes(x = p, y = avg_width)) +
+  geom_line() +
+  facet_wrap(~n, labeller = labeller(n = function(x) paste("n =", x))) +
+  labs(title = "Score Interval: Average Confidence Interval Width",
+       x = "p", y = "Average Width")
+```
+
+## Results & Plots for the Raw Percentile Interval (Using a Parametric Bootstrap)
+
+Below is a plot of the coverage probabilities from the raw percentile (bootstrap) interval simulation.
+
+```{r}
+ggplot(rawboot_df, aes(x = p, y = prop_captured)) +
+  geom_line() +
+  geom_hline(yintercept = 0.95, color = "red") +
+  annotate("text", x = 0.05, y = 0.98, label = "0.95", color = "red") +
+  facet_wrap(~n, labeller = labeller(n = function(x) paste("n =", x))) +
+  labs(title = "Raw Percentile Interval: Proportion of Intervals Capturing True p",
+       x = "p", y = "Proportion Captured") +
+  theme(legend.position="none")
+```
+
+Below is a plot of the average interval width from the raw percentile (bootstrap) interval simulation.
+
+```{r}
+ggplot(rawboot_df, aes(x = p, y = avg_width)) +
+  geom_line() +
+  facet_wrap(~n, labeller = labeller(n = function(x) paste("n =", x))) +
+  labs(title = "Raw Percentile Interval: Average Confidence Interval Width",
+       x = "p", y = "Average Width")
+```
+
+## Results & Plots for the Bootstrap t Interval (Using a Parametric Bootstrap)
+
+# Conclusions
 
 
 
