@@ -616,17 +616,12 @@ rawboot_df <- data.frame(rawboot_df)
 ```
 
 ```{r}
-### Display first and last 5 observations of each data frame ###
+### Display first 5 observations of each data frame ###
 head(wald_df, n = 5)
-tail(wald_df, n = 5)
 head(adjwald_df, n = 5)
-tail(adjwald_df, n = 5)
 head(clopper_df, n = 5)
-tail(clopper_df, n = 5)
 head(score_df, n = 5)
-tail(score_df, n = 5)
 head(rawboot_df, n = 5)
-tail(rawboot_df, n = 5)
 ```
 
 \newpage
