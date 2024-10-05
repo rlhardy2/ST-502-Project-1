@@ -173,6 +173,8 @@ rawboot_CI <- function(y, n, alpha = 0.05, B = 100){
 ## Bootstrap t Interval (Using a Parametric Bootstrap)
 
 ```{r}
+########################### START OF TEST CODE ###########################
+
 ###############################################################################
 ###############################################################################
 # I have the function above "rawboot_CI" that works for calculating the 
@@ -354,7 +356,7 @@ for (n in n_values){
 
 tboot_df <- data.frame(tboot_df)
 
-######################### END OF TEST CODE #########################
+########################### END OF TEST CODE ###########################
 ```
 
 
