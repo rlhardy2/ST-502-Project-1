@@ -471,6 +471,10 @@ ggplot(wald_df, aes(x = p, y = avg_width)) +
   facet_wrap(~n, labeller = labeller(n = function(x) paste("n =", x))) +
   labs(title = "Wald Interval: Average Confidence Interval Width",
        x = "p", y = "Average Width")
+
+# Standard error of the average widths
+wald_avg_width_se <- sd(wald_df$avg_width)
+wald_avg_width_se
 ```
 
 ## Results & Plots for the Adjusted Wald Interval
@@ -496,6 +500,10 @@ ggplot(adjwald_df, aes(x = p, y = avg_width)) +
   facet_wrap(~n, labeller = labeller(n = function(x) paste("n =", x))) +
   labs(title = "Adjusted Wald Interval: Average Confidence Interval Width",
        x = "p", y = "Average Width")
+
+# Standard error of the average widths
+adjwald_avg_width_se <- sd(adjwald_df$avg_width)
+adjwald_avg_width_se
 ```
 
 ## Results & Plots for the Clopper-Pearson Interval
@@ -521,6 +529,10 @@ ggplot(clopper_df, aes(x = p, y = avg_width)) +
   facet_wrap(~n, labeller = labeller(n = function(x) paste("n =", x))) +
   labs(title = "Clopper-Pearson Interval: Average Confidence Interval Width",
        x = "p", y = "Average Width")
+
+# Standard error of the average widths
+clopper_avg_width_se <- sd(clopper_df$avg_width)
+clopper_avg_width_se
 ```
 
 ## Results & Plots for the Score Interval
@@ -546,6 +558,10 @@ ggplot(score_df, aes(x = p, y = avg_width)) +
   facet_wrap(~n, labeller = labeller(n = function(x) paste("n =", x))) +
   labs(title = "Score Interval: Average Confidence Interval Width",
        x = "p", y = "Average Width")
+
+# Standard error of the average widths
+score_avg_width_se <- sd(score_df$avg_width)
+score_avg_width_se
 ```
 
 ## Results & Plots for the Raw Percentile Interval (Using a Parametric Bootstrap)
@@ -571,6 +587,10 @@ ggplot(rawboot_df, aes(x = p, y = avg_width)) +
   facet_wrap(~n, labeller = labeller(n = function(x) paste("n =", x))) +
   labs(title = "Raw Percentile Interval: Average Confidence Interval Width",
        x = "p", y = "Average Width")
+
+# Standard error of the average widths
+rawboot_avg_width_se <- sd(rawboot_df$avg_width)
+rawboot_avg_width_se
 ```
 
 ## Results & Plots for the Bootstrap t Interval (Using a Parametric Bootstrap)
