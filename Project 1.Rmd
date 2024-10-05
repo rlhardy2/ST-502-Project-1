@@ -172,7 +172,7 @@ rawboot_CI <- function(y, n, alpha = 0.05, B = 100){
 
 ## Bootstrap t Interval (Using a Parametric Bootstrap)
 
-```{r}
+```{r, eval = FALSE}
 ########################### START OF TEST CODE ###########################
 
 ###############################################################################
