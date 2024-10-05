@@ -35,7 +35,7 @@ In this project, we will compare six different methods of creating confidence in
 
 # Functions for Creating Confidence Intervals
 
-## (1) Wald Interval
+## Wald Interval
 
 The Wald Interval is as follows:
 
@@ -63,9 +63,7 @@ wald_CI <- function(y, n, alpha = 0.05){
 }
 ```
 
-\newpage
-
-## (2) Adjusted Wald Interval
+## Adjusted Wald Interval
 
 ```{r}
 # Function for the adjusted Wald interval
@@ -87,9 +85,7 @@ adjwald_CI <- function (y, n, alpha=0.05){
 }
 ```
 
-\newpage
-
-## (3) Clopper-Pearson (Exact) Interval
+## Clopper-Pearson (Exact) Interval
 
 ```{r}
 # Function for the Clopper-Pearson (exact) interval
@@ -111,12 +107,10 @@ clopper_CI <- function(y, n, alpha = 0.05){
 }
 ```
 
-\newpage
-
-## (4) Score Interval
+## Score Interval
 
 ```{r}
-#############REVIEW THIS!!!!!!#############
+############# REVIEW THIS #############
 
 # Function for the score interval
 score_CI <- function(y, n, alpha = 0.05){
@@ -140,9 +134,7 @@ score_CI <- function(y, n, alpha = 0.05){
 }
 ```
 
-\newpage
-
-## (5) Raw Percentile Interval (Using a Parametric Bootstrap)
+## Raw Percentile Interval (Using a Parametric Bootstrap)
 
 ```{r}
 # Function for the raw percentile interval (using parametric bootstrap)
@@ -178,17 +170,19 @@ rawboot_CI <- function(y, n, alpha = 0.05, B = 100){
 }
 ```
 
-\newpage
-
-## (6) Bootstrap t Interval (Using a Parametric Bootstrap)
+## Bootstrap t Interval (Using a Parametric Bootstrap)
 
 ```{r}
 
 ```
 
-\newpage
+# Monte Carlo Simulation
 
-# Simulation
+Below is a nested loop that iterates over all 45 combinations of n and p. In this nested loop, we will conduct a Monte Carlo simulation for each of the six confidence interval methods using the functions we created earlier. We will then find the following properties of interest:
+
+* Average width of the confidence intervals.
+* The proportion of intervals that capture the true $p$ (hopefully 1 - $\alpha$).
+* The proportion of intervals that missed high, and the proportion that missed low.
 
 ```{r}
 # Setting the seed
@@ -271,7 +265,7 @@ tboot_df   <- matrix(ncol = 6,nrow = 0, dimnames = list(NULL, c("n", "p", "avg_w
 
 #################################################################################
 
-## Finding the CIs and properties of interest for all combinations of n and p! ##
+### Monte Carlo simulation in a nested loop! ###
 for (n in n_values){
   for (p in p_values){
       # Randomly generating from a binomial with n and p
