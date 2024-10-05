@@ -213,7 +213,7 @@ boot_CI <- function(y, n, alpha = 0.05, B = 100){
     
     # Secondary bootstrap to find SEs needed for t-statistics
     secondary_boot <- replicate(B, {
-      data2 <- rbinom(1, size = n, prob = p_hat)
+      data2 <- rbinom(1, size = n, prob = boot_estimates)
       p_hat_boot_2 <- data2/n
       
       return(p_hat_boot_2)
@@ -486,6 +486,8 @@ for (n in n_values){
         rawboot_CI_calc <- rawboot_CI(y = y, n = n, alpha = alpha, B = B)
         rawboot_lower   <- rawboot_CI_calc[1]
         rawboot_upper   <- rawboot_CI_calc[2]
+        
+        
         
         #####################################################################
         
