@@ -26,13 +26,22 @@ library(caret)
 
 # Introduction & Goals of the Study
 
-In order to understand what good properties of confidence are, we will need to consider the following:
+In this study, we will compare six different methods for creating confidence intervals. We will compare the following:
 
-* The proportion of intervals that capture the true value (hopefully 1 - $\alpha$).
-* The proportion of intervals that miss above and the proportion that miss below.
-* The average length of the interval.
+* Wald interval
+* Adjusted Wald interval
+* Clopper-Pearson (exact) interval
+* Score interval
+* Raw percentile interval using a parametric bootstrap
+* Bootstrap t interval using a parametric bootstrap
 
-In this project, we will compare six different methods of creating confidence intervals for a Binomial random sample.
+In order to understand what good properties of confidence are, we will need to consider the following for each confidence interval method:
+
+* The proportion of intervals that capture the true value (hopefully 1 - $\alpha$)
+* The proportion of intervals that miss above and the proportion that miss below
+* The average length of the interval
+
+There will be four major sections of this report. The first section will focus on writing functions to calculate each of the six different confidence intervals. The second section will be the Monte Carlo simulation where we generate $N = 1000$ random samples from a Binomial distribution where $n$ varies across $5, 15, 30$ and $p$ varies from $0.01$ to $0.99$ with $15$ total values. Then, for each confidence interval method, we will calculate confidence intervals for each of the $1000$ random samples in order to then calculate the above mentioned properties of interest. The third section will contain graphs of the proportion of intervals that captured the true $p$ for each value of $n$ as well as graphs comparing the average width of the intervals for each value of $n$. The fourth and final section will focus on comparing the different methods and drawing conclusions.
 
 # Methods & Functions for Creating Confidence Intervals
 
@@ -267,7 +276,7 @@ alpha <- 0.05
 n_values <- c(15, 30, 100)
 p_values <- seq(from = 0.01, to = 0.99, length.out = 15)
 
-### Make empty vectors for each CI method to store values ###
+### Make empty vectors for each CI method to store values 
 
 wald_width_vec <- numeric()
 wald_prop_true <- numeric()
@@ -299,7 +308,7 @@ tboot_prop_true <- numeric()
 tboot_miss_above <- numeric()
 tboot_miss_below <- numeric()
 
-### Make empty matrices for each CI method to store CI values ###
+### Make empty matrices for each CI method to store CI values 
 
 wald_allCIs    <- matrix(ncol = 4,nrow = 0, dimnames = list(NULL, c("n", "p", 
                                                                "lower", "upper")))
@@ -314,7 +323,7 @@ rawboot_allCIs <- matrix(ncol = 4,nrow = 0, dimnames = list(NULL, c("n", "p",
 tboot_allCIs   <- matrix(ncol = 4,nrow = 0, dimnames = list(NULL, c("n", "p", 
                                                                   "lower", "upper")))
 
-### Make empty matrices for each CI method to store results ###
+### Make empty matrices for each CI method to store results 
 
 wald_df    <- matrix(ncol = 6,nrow = 0, dimnames = list(NULL, c("n", "p", "avg_width",
                                                      "prop_captured", "prop_below",
@@ -337,7 +346,7 @@ tboot_df   <- matrix(ncol = 6,nrow = 0, dimnames = list(NULL, c("n", "p", "avg_w
 
 #################################################################################
 
-### Monte Carlo simulation in a nested loop! ###
+### Monte Carlo simulation in a nested loop! 
 for (n in n_values){
   for (p in p_values){
       # Randomly generating from a binomial with n and p
@@ -514,7 +523,7 @@ for (n in n_values){
   }
 }
 
-### Final results as data frames ###
+### Final results as data frames
 
 wald_df    <- data.frame(wald_df)
 adjwald_df <- data.frame(adjwald_df)
@@ -529,7 +538,7 @@ tboot_df$prop_above    <- round(tboot_df$prop_above, 3)
 ```
 
 ```{r}
-### Display first 5 observations of each data frame ###
+### Display first 5 observations of each data frame
 head(wald_df, n = 5)
 head(adjwald_df, n = 5)
 head(clopper_df, n = 5)
