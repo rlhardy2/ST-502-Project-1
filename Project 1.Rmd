@@ -47,11 +47,13 @@ There will be four major sections of this report. The first section will focus o
 
 ## Wald Interval
 
-The Wald Interval is as follows:
+The Wald interval is as follows:
 
 \centerline{ }
 \centerline{$\hat{p} \pm z_{\alpha/2}\sqrt{\frac{\hat{p}(1-\hat{p})}{n}}$}
 \centerline{ }
+
+The code below creates the function `wald_CI` that we will use to calculate the Wald interval later in the Monte Carlo simulation!
 
 ```{r}
 # Function for the Wald interval
@@ -68,12 +70,20 @@ wald_CI <- function(y, n, alpha = 0.05){
     int[2] = 1
   }
   
-  # Returning the interval
+  # Return the interval
   return(int)
 }
 ```
 
 ## Adjusted Wald Interval
+
+The Adjusted Wald interval is as follows:
+
+\centerline{ }
+\centerline{$\frac{y+2}{n+4} \pm z_{\alpha/2}\sqrt{\frac{\frac{y+2}{n+4}(1-\frac{y+2}{n+4})}{n+4}}$}
+\centerline{ }
+
+The code below creates the function `adjwald_CI` that we will use to calculate the Adjusted Wald interval later in the Monte Carlo simulation!
 
 ```{r}
 # Function for the Adjusted Wald interval
@@ -90,12 +100,20 @@ adjwald_CI <- function (y, n, alpha=0.05){
     int[2] = 1
   }
   
-  # Returning the interval
+  # Return the interval
   return(int)
 }
 ```
 
 ## Clopper-Pearson (Exact) Interval
+
+The Clopper-Pearson (exact) interval is as follows:
+
+\centerline{ }
+\centerline{$\left[1 + \frac{n-y+1}{yF_{2y,2(n-y+1),1-\alpha/2}}\right]^{-1} < p < \left[1 + \frac{n-y}{(y+1)F_{2(y+1),2(n-y),\alpha/2}}\right]^{-1}$}
+\centerline{ }
+
+The code below creates the function `clopper_CI` that we will use to calculate the Clopper-Pearson interval later in the Monte Carlo simulation!
 
 ```{r}
 # Function for the Clopper-Pearson (exact) interval
@@ -111,13 +129,22 @@ clopper_CI <- function(y, n, alpha = 0.05){
   }
   # If we do not have either of the two cases above, we will calculate the CI
   else{
-    c((1 + (n-y+1)/(y*qf(alpha/2, 2*y, 2*(n-y+1))))**-1,
-      (1 + (n-y)/((y+1)*qf(1-alpha/2, 2*(y+1), 2*(n-y))))**-1)
+    int <- c((1 + (n-y+1)/(y*qf(alpha/2, 2*y, 2*(n-y+1))))**-1,
+            (1 + (n-y)/((y+1)*qf(1-alpha/2, 2*(y+1), 2*(n-y))))**-1)
+    return(int)
   }
 }
 ```
 
 ## Score Interval
+
+The Score interval is as follows:
+
+\centerline{ }
+\centerline{$\left(\hat{p}+\frac{z^2_{\alpha/2}}{2n}\pm z_{\alpha/2} \sqrt{\frac{\hat{p}(1-\hat{p})+z^2_{\alpha/2}/4n}{n}}   \right)/ \left(1+z^2_{\alpha/2}/n\right)$}
+\centerline{ }
+
+The code below creates the function `score_CI` that we will use to calculate the Score interval later in the Monte Carlo simulation! (In this function, we will split the equation shown above into parts in order to make the code and computation easier to understand.)
 
 ```{r}
 # Function for the score interval
@@ -130,19 +157,23 @@ score_CI <- function(y, n, alpha = 0.05){
   center <- (p_hat + (z**2/(2*n)))
   
   # Calculate the margin of error
-  err <- z*sqrt((p_hat*(1 - p_hat) + (z**2/(4*n)))/n)
+  error <- z*sqrt((p_hat*(1 - p_hat) + (z**2/(4*n)))/n)
+  
+  # Calculate the denominator
+  denominator <- (1 + (z**2/n))
   
   # Calculate the lower and upper bounds
-  upper <- (center + err)/(1 + (z**2/n))
-  lower <- (center - err)/(1 + (z**2/n))
+  upper <- (center + error)/denominator
+  lower <- (center - error)/denominator
   
   # Return the interval
   return(c(lower, upper))
-  
 }
 ```
 
 ## Raw Percent Interval (Using a Parametric Bootstrap)
+
+The raw percentile interval is calculated by first running a parametric bootstrap simulation of a Binomial random sample $B$ times and calculating $\hat{p}_{boot}$ for each of those $B$ bootstrap samples. Then, we simply use R's `quantile` function to find the $0.025$ and $0.975$ quantiles which will represent our confidence interval!
 
 ```{r}
 # Function for the raw percentile interval (using parametric bootstrap)
@@ -173,11 +204,14 @@ rawboot_CI <- function(y, n, alpha = 0.05, B = 100){
     raw_upper <- quantile(boot_estimates, 1 - alpha/2)
   }
   
+  # Return the interval
   return(c(raw_lower, raw_upper))
 }
 ```
 
 ## Bootstrap t Interval (Using a Parametric Bootstrap)
+
+The bootstrap t interval is calculated by first running a parametric bootstrap simulation of a Binomial random sample $B$ times and calculating $\hat{p}_{boot}$ for each of those $B$ bootstrap samples. For each of those $B$ samples, we will run a secondary bootstrap where we will find $\hat{p}_{boot}^*$ which will allow us to find our standard error of $\hat{p}_{boot}$, which we can then use to find our $t$-statistic in order to calculate our confidence interval.
 
 ```{r}
 # Function for the bootstrap interval (using parametric bootstrap)
@@ -251,19 +285,25 @@ tboot_CI <- function(y, n, alpha = 0.05, B = 100){
       boot_upper <- 1
     }
     
+    # Return the interval
     return(c(boot_lower, boot_upper))
   }
 }
 ```
 
+\newpage
 
 # Monte Carlo Simulation
 
-Below is a nested loop that iterates over all 45 combinations of n and p. In this nested loop, we will conduct a Monte Carlo simulation for each of the six confidence interval methods using the functions we created earlier. We will then find the following properties of interest:
+Below is a nested loop that iterates over all 45 combinations of $n$ and $p$. In this nested loop, we will conduct a Monte Carlo simulation for each of the six confidence interval methods using the functions we created earlier. We will then find the following properties of interest:
 
-* Average width of the confidence intervals.
-* The proportion of intervals that capture the true $p$ (hopefully 1 - $\alpha$).
-* The proportion of intervals that missed high, and the proportion that missed low.
+* The proportion of intervals that capture the true value (hopefully 1 - $\alpha$)
+* The proportion of intervals that miss above and the proportion that miss below
+* The average length of the interval
+
+For every combination of $n$ and $p$, we will generate $N = 1000$ random samples of size $n$ with probability $p$ from a Binomial distribution. For *every* confidence interval calculated, we will determine the interval width, whether or not the interval captured the true $p$, and whether or not the interval missed too high or too low. This will be done for each of the six different methods. Then, we will average over the quantities listed to get our final results. Our final results will be stored in six data frames with the following columns: `n`, `p`, `avg_width`, `prop_captured`, `prop_below`, and `prop_above`. These columns pertain to the sample size $n$, probability $p$, average width of the intervals, proportion of intervals capturing the true $p$, proportion of intervals missing too low, and the proportion of intervals missing too high, respectively.
+
+In order to store our results, we will create empty vectors and matrices (as seen below).
 
 ```{r}
 # Setting the seed
@@ -308,7 +348,7 @@ tboot_prop_true <- numeric()
 tboot_miss_above <- numeric()
 tboot_miss_below <- numeric()
 
-### Make empty matrices for each CI method to store CI values 
+### Make empty matrices for each CI method to store all CI values 
 
 wald_allCIs    <- matrix(ncol = 4,nrow = 0, dimnames = list(NULL, c("n", "p", 
                                                                "lower", "upper")))
@@ -323,7 +363,7 @@ rawboot_allCIs <- matrix(ncol = 4,nrow = 0, dimnames = list(NULL, c("n", "p",
 tboot_allCIs   <- matrix(ncol = 4,nrow = 0, dimnames = list(NULL, c("n", "p", 
                                                                   "lower", "upper")))
 
-### Make empty matrices for each CI method to store results 
+### Make empty matrices for each CI method to store properties of interest 
 
 wald_df    <- matrix(ncol = 6,nrow = 0, dimnames = list(NULL, c("n", "p", "avg_width",
                                                      "prop_captured", "prop_below",
@@ -355,7 +395,7 @@ for (n in n_values){
       # For each of the 1000 random samples we will calculate a confidence interval
       # as well as the width of the interval, whether or not the true p was
       # captured, and if the interval missed high or low. We will do this for 
-      # each of the six different CI methods!
+      # each of the six different CI methods! See below.
       for (i in 1:N){
         y <- data[i]
         
@@ -391,7 +431,7 @@ for (n in n_values){
         
         #####################################################################
         
-        ### Calculating properties of interest below ###
+        ### Calculating properties of interest below
         
         # Calculating the width of each of the 1000 intervals (for each CI)
         wald_width    <- (wald_upper - wald_lower)
@@ -463,17 +503,19 @@ for (n in n_values){
           rawboot_miss_above[i] <- rawboot_above
           tboot_miss_above[i]   <- tboot_above
         
-        # Storing the CI for every random sample of every combination
-        # of n and p, total of N*n*p rows (for each CI)
+        ### Storing the CI for every random sample of every combination
+        ### of n and p, total of N*n*p rows (for each CI)
         wald_allCIs    <- rbind(wald_allCIs, c(n, p, wald_lower, wald_upper))
         adjwald_allCIs <- rbind(adjwald_allCIs, c(n, p, adjwald_lower, adjwald_upper))
         clopper_allCIs <- rbind(clopper_allCIs, c(n, p, clopper_lower, clopper_upper))
         score_allCIs   <- rbind(score_allCIs, c(n, p, score_lower, score_upper))
         rawboot_allCIs <- rbind(rawboot_allCIs, c(n, p, rawboot_lower, rawboot_upper))
         tboot_allCIs   <- rbind(tboot_allCIs, c(n, p, tboot_lower, tboot_upper))
+        
+        ############### END OF INNER LOOP ###############
       }
       
-      ### Averaging the quantities above to get our results ###
+      ### Averaging the quantities above to get our results
       
       # Taking the average of the width vector (for each CI)
       wald_avg_width    <- mean(wald_width_vec)
@@ -507,7 +549,7 @@ for (n in n_values){
       rawboot_prop_above <- mean(rawboot_miss_above)
       tboot_prop_above   <- mean(tboot_miss_above, na.rm = TRUE)
       
-      # Putting the results found above into our matrices (for each CI)
+      ### Putting the results found above into our matrices (for each CI)
       wald_df    <- rbind(wald_df, c(n, p, wald_avg_width, wald_prop_captured, 
                                      wald_prop_below, wald_prop_above))
       adjwald_df <- rbind(adjwald_df, c(n, p, adjwald_avg_width, adjwald_prop_captured, 
@@ -532,6 +574,7 @@ score_df   <- data.frame(score_df)
 rawboot_df <- data.frame(rawboot_df)
 tboot_df   <- data.frame(tboot_df)
 
+# Rounding some of the variables in the last dataset
 tboot_df$prop_captured <- round(tboot_df$prop_captured, 3)
 tboot_df$prop_below    <- round(tboot_df$prop_below, 3)
 tboot_df$prop_above    <- round(tboot_df$prop_above, 3)
@@ -566,6 +609,10 @@ ggplot(wald_df, aes(x = p, y = prop_captured)) +
   theme(legend.position="none")
 ```
 
+We can see above that the Wald interval performs poorly when $p$ is very low or very high. As we would expect, it performs better for larger sample sizes.
+
+\newpage
+
 Below is a plot of the average interval width from the Wald interval simulation.
 
 ```{r}
@@ -574,11 +621,19 @@ ggplot(wald_df, aes(x = p, y = avg_width)) +
   facet_wrap(~n, labeller = labeller(n = function(x) paste("n =", x))) +
   labs(title = "Wald Interval: Average Confidence Interval Width",
        x = "p", y = "Average Width")
+```
 
+We can see above that the average interval width for the Wald interval is smaller for very low and very high values of $p$. As we would expect, the average width decreases as we increase our sample size.
+
+The standard error of the average widths is below.
+
+```{r}
 # Standard error of the average widths
 wald_avg_width_se <- sd(wald_df$avg_width)
 wald_avg_width_se
 ```
+
+\newpage
 
 ## Results & Plots for the Adjusted Wald Interval
 
@@ -595,6 +650,10 @@ ggplot(adjwald_df, aes(x = p, y = prop_captured)) +
   theme(legend.position="none")
 ```
 
+We can see above that the Adjusted Wald interval performs much better than the Wald interval and behaves much better for lower and higher values of $p$. We can also see that as our sample size increases, our line is less jagged, leading us to believe that this confidence interval method behaves better for larger sample sizes.
+
+\newpage
+
 Below is a plot of the average interval width from the Adjusted Wald interval simulation.
 
 ```{r}
@@ -603,11 +662,19 @@ ggplot(adjwald_df, aes(x = p, y = avg_width)) +
   facet_wrap(~n, labeller = labeller(n = function(x) paste("n =", x))) +
   labs(title = "Adjusted Wald Interval: Average Confidence Interval Width",
        x = "p", y = "Average Width")
+```
 
+We can see above that the average interval width for the Adjusted Wald interval decreases as we increase our sample size. Similar to the Wald interval, our average width is smaller for lower and higher values of $p$.
+
+The standard error of the average widths is below.
+
+```{r}
 # Standard error of the average widths
 adjwald_avg_width_se <- sd(adjwald_df$avg_width)
 adjwald_avg_width_se
 ```
+
+\newpage
 
 ## Results & Plots for the Clopper-Pearson Interval
 
@@ -624,6 +691,10 @@ ggplot(clopper_df, aes(x = p, y = prop_captured)) +
   theme(legend.position="none")
 ```
 
+We can see above that the Clopper-Pearson interval performs very poorly for low and high values of $p$, similar to the Wald interval. The interval seems to perform well when $p$ is between approximately $0.1$ and $0.9$. As we would expect, the interval performs better as we increase our sample size, though it still performs poorly for more extreme values of $p$.
+
+\newpage
+
 Below is a plot of the average interval width from the Clopper-Pearson interval simulation.
 
 ```{r}
@@ -632,11 +703,19 @@ ggplot(clopper_df, aes(x = p, y = avg_width)) +
   facet_wrap(~n, labeller = labeller(n = function(x) paste("n =", x))) +
   labs(title = "Clopper-Pearson Interval: Average Confidence Interval Width",
        x = "p", y = "Average Width")
+```
 
+We can see above that the average interval width for the Clopper-Pearson interval decreases as we increase our sample size. Note that this graph looks almost identical to that of the Wald interval average widths!
+
+The standard error of the average widths is below.
+
+```{r}
 # Standard error of the average widths
 clopper_avg_width_se <- sd(clopper_df$avg_width)
 clopper_avg_width_se
 ```
+
+\newpage
 
 ## Results & Plots for the Score Interval
 
@@ -653,6 +732,10 @@ ggplot(score_df, aes(x = p, y = prop_captured)) +
   theme(legend.position="none")
 ```
 
+We can see above that for smaller sample sizes, the Score interval performs poorly for both low and high values of $p$, but performs very well for values of $p$ around the $0.5$ range. As expected, when we increase our sample size our confidence intervals become more accurate.
+
+\newpage
+
 Below is a plot of the average interval width from the Score interval simulation.
 
 ```{r}
@@ -661,11 +744,19 @@ ggplot(score_df, aes(x = p, y = avg_width)) +
   facet_wrap(~n, labeller = labeller(n = function(x) paste("n =", x))) +
   labs(title = "Score Interval: Average Confidence Interval Width",
        x = "p", y = "Average Width")
+```
 
+We can see above that as we increase our sample size, the average interval width decreases. This graph looks similar to that of the Adjusted Wald interval average widths.
+
+The standard error of the average widths is below.
+
+```{r}
 # Standard error of the average widths
 score_avg_width_se <- sd(score_df$avg_width)
 score_avg_width_se
 ```
+
+\newpage
 
 ## Results & Plots for the Raw Percentile Interval (Using a Parametric Bootstrap)
 
@@ -682,6 +773,10 @@ ggplot(rawboot_df, aes(x = p, y = prop_captured)) +
   theme(legend.position="none")
 ```
 
+We can see above that our raw percentile interval (using a parametric bootstrap) consistently under-performs. We can also see that the interval performs poorly for both low and high values of $p$, especially in smaller sample sizes. As we would expect, the interval does become slightly more accurate as we increase our sample size.
+
+\newpage
+
 Below is a plot of the average interval width from the raw percentile (bootstrap) interval simulation.
 
 ```{r}
@@ -690,11 +785,19 @@ ggplot(rawboot_df, aes(x = p, y = avg_width)) +
   facet_wrap(~n, labeller = labeller(n = function(x) paste("n =", x))) +
   labs(title = "Raw Percentile Interval: Average Confidence Interval Width",
        x = "p", y = "Average Width")
+```
 
+We can see above that our average interval width for the raw percentile interval decreases as our sample size increases, as expected.
+
+The standard error of the average widths is below.
+
+```{r}
 # Standard error of the average widths
 rawboot_avg_width_se <- sd(rawboot_df$avg_width)
 rawboot_avg_width_se
 ```
+
+\newpage
 
 ## Results & Plots for the Bootstrap t Interval (Using a Parametric Bootstrap)
 
@@ -711,6 +814,10 @@ ggplot(tboot_df, aes(x = p, y = prop_captured)) +
   theme(legend.position="none")
 ```
 
+We can see above that the bootstrap t interval consistently under-performs, much like the raw percentile interval. However, it does get closer and closer to $0.95$ as we increase our sample size. Much like the raw percentile interval, our bootstrap t interval performs poorly for both low and high values of $p$, especially in smaller sample sizes.
+
+\newpage
+
 Below is a plot of the average interval width from the bootstrap t interval simulation.
 
 ```{r}
@@ -719,11 +826,19 @@ ggplot(tboot_df, aes(x = p, y = avg_width)) +
   facet_wrap(~n, labeller = labeller(n = function(x) paste("n =", x))) +
   labs(title = "Bootstrap t Interval: Average Confidence Interval Width",
        x = "p", y = "Average Width")
+```
 
+We can see above that our average interval widths for the bootstrap t interval look basically identical to that of the raw percentile interval. As expected, our average interval width decreases as our sample size increases
+
+The standard error of the average widths is below.
+
+```{r}
 # Standard error of the average widths
 tboot_avg_width_se <- sd(tboot_df$avg_width)
 tboot_avg_width_se
 ```
+
+\newpage
 
 # Conclusions
 
