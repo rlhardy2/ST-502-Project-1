@@ -592,9 +592,9 @@ head(tboot_df, n = 5)
 
 \newpage
 
-# Comparison of the Different Methods
+# Examining the Different Methods Using Plots
 
-## Results & Plots for the Wald Interval
+## Wald Interval
 
 Below is a plot of the coverage probabilities from the Wald interval simulation.
 
@@ -635,7 +635,7 @@ wald_avg_width_se
 
 \newpage
 
-## Results & Plots for the Adjusted Wald Interval
+## Adjusted Wald Interval
 
 Below is a plot of the coverage probabilities from the Adjusted Wald interval simulation.
 
@@ -676,7 +676,7 @@ adjwald_avg_width_se
 
 \newpage
 
-## Results & Plots for the Clopper-Pearson Interval
+## Clopper-Pearson Interval
 
 Below is a plot of the coverage probabilities from the Clopper-Pearson interval simulation.
 
@@ -717,7 +717,7 @@ clopper_avg_width_se
 
 \newpage
 
-## Results & Plots for the Score Interval
+## Score Interval
 
 Below is a plot of the coverage probabilities from the Score interval simulation.
 
@@ -758,7 +758,7 @@ score_avg_width_se
 
 \newpage
 
-## Results & Plots for the Raw Percentile Interval (Using a Parametric Bootstrap)
+## Raw Percentile Interval (Using a Parametric Bootstrap)
 
 Below is a plot of the coverage probabilities from the raw percentile (bootstrap) interval simulation.
 
@@ -799,7 +799,7 @@ rawboot_avg_width_se
 
 \newpage
 
-## Results & Plots for the Bootstrap t Interval (Using a Parametric Bootstrap)
+## Bootstrap t Interval (Using a Parametric Bootstrap)
 
 Below is a plot of the coverage probabilities from the bootstrap t interval simulation.
 
@@ -840,11 +840,139 @@ tboot_avg_width_se
 
 \newpage
 
-# Conclusions
+# Examining the Different Methods Using Summary Statistics
 
+## Wald Interval
 
+```{r}
+# Separating the Wald results dataset by n values
+wald_n15  <- wald_df %>% filter(n == 15)
+wald_n30  <- wald_df %>% filter(n == 30)
+wald_n100 <- wald_df %>% filter(n == 100)
 
+# Finding the average proportion of intervals that captured the true p
+# For each sample size
+wald_n15_mean_prop_captured  <- mean(wald_n15$prop_captured)
+wald_n30_mean_prop_captured  <- mean(wald_n30$prop_captured)
+wald_n100_mean_prop_captured <- mean(wald_n100$prop_captured)
 
+# Print the values found above 
+wald_n15_mean_prop_captured
+wald_n30_mean_prop_captured
+wald_n100_mean_prop_captured
+```
 
+We can see above that for the Wald interval with a sample size of $100$, our average proportion of intervals that capture the true $p$ is approximately 0.892 or 89.2%.
 
+## Adjusted Wald Interval
+
+```{r}
+# Separating the Adjusted Wald results dataset by n values
+adjwald_n15  <- adjwald_df %>% filter(n == 15)
+adjwald_n30  <- adjwald_df %>% filter(n == 30)
+adjwald_n100 <- adjwald_df %>% filter(n == 100)
+
+# Finding the average proportion of intervals that captured the true p
+# For each sample size
+adjwald_n15_mean_prop_captured  <- mean(adjwald_n15$prop_captured)
+adjwald_n30_mean_prop_captured  <- mean(adjwald_n30$prop_captured)
+adjwald_n100_mean_prop_captured <- mean(adjwald_n100$prop_captured)
+
+# Print the values found above 
+adjwald_n15_mean_prop_captured
+adjwald_n30_mean_prop_captured
+adjwald_n100_mean_prop_captured
+```
+
+We can see above that for the Adjusted Wald interval with a sample size of $100$, our average proportion of intervals that capture the true $p$ is approximately 0.96 or 96%.
+
+## Clopper-Pearson Interval
+
+```{r}
+# Separating the Clopper-Pearson results dataset by n values
+clopper_n15  <- clopper_df %>% filter(n == 15)
+clopper_n30  <- clopper_df %>% filter(n == 30)
+clopper_n100 <- clopper_df %>% filter(n == 100)
+
+# Finding the average proportion of intervals that captured the true p
+# For each sample size
+clopper_n15_mean_prop_captured  <- mean(clopper_n15$prop_captured)
+clopper_n30_mean_prop_captured  <- mean(clopper_n30$prop_captured)
+clopper_n100_mean_prop_captured <- mean(clopper_n100$prop_captured)
+
+# Print the values found above 
+clopper_n15_mean_prop_captured
+clopper_n30_mean_prop_captured
+clopper_n100_mean_prop_captured
+```
+
+We can see above that for the Clopper-Pearson interval with a sample size of $100$, our average proportion of intervals that capture the true $p$ is approximately 0.92 or 92%.
+
+## Score Interval
+
+```{r}
+# Separating the Score results dataset by n values
+score_n15  <- score_df %>% filter(n == 15)
+score_n30  <- score_df %>% filter(n == 30)
+score_n100 <- score_df %>% filter(n == 100)
+
+# Finding the average proportion of intervals that captured the true p
+# For each sample size
+score_n15_mean_prop_captured  <- mean(score_n15$prop_captured)
+score_n30_mean_prop_captured  <- mean(score_n30$prop_captured)
+score_n100_mean_prop_captured <- mean(score_n100$prop_captured)
+
+# Print the values found above 
+score_n15_mean_prop_captured
+score_n30_mean_prop_captured
+score_n100_mean_prop_captured
+```
+
+We can see above that for the Score interval with a sample size of $100$, our average proportion of intervals that capture the true $p$ is approximately 0.947 or 94.7%.
+
+## Raw Percentile Interval (Using a Parametric Bootstrap)
+
+```{r}
+# Separating the bootstrap raw percentile results dataset by n values
+rawboot_n15  <- rawboot_df %>% filter(n == 15)
+rawboot_n30  <- rawboot_df %>% filter(n == 30)
+rawboot_n100 <- rawboot_df %>% filter(n == 100)
+
+# Finding the average proportion of intervals that captured the true p
+# For each sample size
+rawboot_n15_mean_prop_captured  <- mean(rawboot_n15$prop_captured)
+rawboot_n30_mean_prop_captured  <- mean(rawboot_n30$prop_captured)
+rawboot_n100_mean_prop_captured <- mean(rawboot_n100$prop_captured)
+
+# Print the values found above 
+rawboot_n15_mean_prop_captured
+rawboot_n30_mean_prop_captured
+rawboot_n100_mean_prop_captured
+```
+
+We can see above that for the bootstrap raw percentile interval with a sample size of $100$, our average proportion of intervals that capture the true $p$ is approximately 0.883 or 88.3%.
+
+## Bootstrap t Interval (Using a Parametric Bootstrap)
+
+```{r}
+# Separating the bootstrap t interval results dataset by n values
+tboot_n15  <- tboot_df %>% filter(n == 15)
+tboot_n30  <- tboot_df %>% filter(n == 30)
+tboot_n100 <- tboot_df %>% filter(n == 100)
+
+# Finding the average proportion of intervals that captured the true p
+# For each sample size
+tboot_n15_mean_prop_captured  <- mean(tboot_n15$prop_captured)
+tboot_n30_mean_prop_captured  <- mean(tboot_n30$prop_captured)
+tboot_n100_mean_prop_captured <- mean(tboot_n100$prop_captured)
+
+# Print the values found above 
+tboot_n15_mean_prop_captured
+tboot_n30_mean_prop_captured
+tboot_n100_mean_prop_captured
+```
+
+We can see above that for the bootstrap t interval with a sample size of $100$, our average proportion of intervals that capture the true $p$ is approximately 0.865 or 86.5%.
+
+# Conclusion
 
