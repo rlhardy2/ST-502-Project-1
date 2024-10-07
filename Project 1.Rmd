@@ -45,6 +45,12 @@ There will be five major sections of this report. The first section will focus o
 
 # Methods & Functions for Creating Confidence Intervals
 
+To preface this section, we will discuss some special cases of confidence intervals below.
+
+For some confidence intervals, we may have cases where our lower bound is less than 0. If this is the case, we will set the lower bound to be equal to 0 since we cannot have negative probabilities. Similarly, if there are any cases where our upper bound is greater than 1, we will set the upper bound to be equal to 1 since we cannot have probabilities greater than 1.
+
+There will also be some cases where $y = 0$ or $y = n$, if these arise we will set our intervals to be $(0,0)$ and $(1,1)$, respectively.
+
 ## Wald Interval
 
 The Wald interval is as follows:
@@ -212,6 +218,8 @@ rawboot_CI <- function(y, n, alpha = 0.05, B = 100){
 ## Bootstrap t Interval (Using a Parametric Bootstrap)
 
 The bootstrap t interval is calculated by first running a parametric bootstrap simulation of a Binomial random sample $B$ times and calculating $\hat{p}_{boot}$ for each of those $B$ bootstrap samples. For each of those $B$ samples, we will run a secondary bootstrap where we will find $\hat{p}_{boot}^*$ which will allow us to find our standard error of $\hat{p}_{boot}$, which we can then use to find our $t$-statistic in order to calculate our confidence interval.
+
+We will have cases when $\hat{p}$ is either 0 or 1, which will cause $\hat{p}_{boot}$ to also be 0 or 1, respectively. In these cases, our $SE(\hat{p}_{boot})$ will be 0, which will cause problems when calculating our $t$-statistic since we cannot divide by 0. In these cases, we will throw out these values. We see more of this with very low and very high values of $p$.
 
 ```{r}
 # Function for the bootstrap interval (using parametric bootstrap)
@@ -826,7 +834,7 @@ ggplot(tboot_df, aes(x = p, y = avg_width)) +
        x = "p", y = "Average Width")
 ```
 
-We can see above that our average interval widths for the bootstrap t interval look basically identical to that of the raw percentile interval. As expected, our average interval width decreases as our sample size increases
+We can see above that our average interval widths for the bootstrap t interval look basically identical to that of the raw percentile interval. As expected, our average interval width decreases as our sample size increases.
 
 The standard error of the average widths is below.
 
@@ -1036,7 +1044,7 @@ We can see above that for the bootstrap t interval with a sample size of $100$, 
 
 In conclusion, the Wald, Clopper-Pearson, bootstrap raw percentile, and bootstrap t intervals performed poorly for both very low and very high values of $p$, especially in smaller sample sizes. The bootstrap raw percentile interval and bootstrap t interval both consistently under-perform for all samples sizes tested.
 
-The intervals that appear to perform the best are the Adjusted Wald interval and the Score interval. Both of these intervals perform well for all three values of $n$, which we can see clearly in the plots provided earlier. Additionally, both intervals had values very close to $0.95$/$95$% for the average proportion of intervals that captured the true $p$, which is what we want to see! Therefore, given all of the information provided in this study, out of the six confidence interval methods tested, we favor the Adjusted Wald interval and the Score interval.
+The intervals that appear to perform the best are the Adjusted Wald interval and the Score interval. Both of these intervals perform well for all three values of $n$, which we can see clearly in the plots provided earlier. Additionally, both intervals had values very close to $0.95$/$95$% for the average proportion of intervals that captured the true $p$, which is what we want to see! Therefore, given all of the information provided in this study, out of the six confidence interval methods tested, we favor the Adjusted Wald interval and the Score interval. 
 
 
 
