@@ -41,7 +41,7 @@ In order to understand what good properties of confidence are, we will need to c
 * The proportion of intervals that miss above and the proportion that miss below
 * The average length of the interval
 
-There will be five major sections of this report. The first section will focus on writing functions to calculate each of the six different confidence intervals. The second section will be the Monte Carlo simulation where we generate $N = 1000$ random samples from a Binomial distribution where $n$ varies across $5, 15, 30$ and $p$ varies from $0.01$ to $0.99$ with $15$ total values. Then, for each confidence interval method, we will calculate confidence intervals for each of the $1000$ random samples in order to then calculate the above mentioned properties of interest. The third section will contain graphs of the proportion of intervals that captured the true $p$ for each value of $n$ as well as graphs comparing the average width of the intervals for each value of $n$. The fourth section will examine each of the confidence interval methods using summary statistics (for example, finding the average proportion of intervals that capture the true $p$ for each sample size $n$). The fifth and final section will focus on drawing conclusions about which intervals we favor as a result of the study.
+There will be five major sections of this report. The first section will focus on writing functions to calculate each of the six different confidence intervals. The second section will be the Monte Carlo simulation where we will generate $N = 1000$ random samples from a Binomial distribution where $n$ varies across $5, 15, 30$ and $p$ varies from $0.01$ to $0.99$ with $15$ total values. Then, for each confidence interval method, we will calculate confidence intervals for each of the $1000$ random samples in order to then calculate the above mentioned properties of interest. The third section will contain graphs of the proportion of intervals that captured the true $p$ for each value of $n$ as well as graphs comparing the average width of the intervals for each value of $n$. The fourth section will examine each of the confidence interval methods using summary statistics (for example, finding the average proportion of intervals that capture the true $p$ for each sample size $n$). The fifth and final section will focus on drawing conclusions about which intervals we favor as a result of the study.
 
 # Methods & Functions for Creating Confidence Intervals
 
@@ -217,9 +217,9 @@ rawboot_CI <- function(y, n, alpha = 0.05, B = 100){
 
 ## Bootstrap t Interval (Using a Parametric Bootstrap)
 
-The bootstrap t interval is calculated by first running a parametric bootstrap simulation of a Binomial random sample $B$ times and calculating $\hat{p}_{boot}$ for each of those $B$ bootstrap samples. For each of those $B$ samples, we will run a secondary bootstrap where we will find $\hat{p}_{boot}^*$ which will allow us to find our standard error of $\hat{p}_{boot}$, which we can then use to find our $t$-statistic in order to calculate our confidence interval.
+The bootstrap t interval is calculated by first running a parametric bootstrap simulation of a Binomial random sample $B$ times and calculating $\hat{p}_{boot}$ for each of those $B$ bootstrap samples. Then, we will run a secondary bootstrap $B$ times where we will find $\hat{p}_{boot}^*$, which will allow us to find our standard error of $\hat{p}_{boot}$, which we can then use to find our $t$-statistic in order to calculate our confidence interval.
 
-We will have cases when $\hat{p}$ is either 0 or 1, which will cause $\hat{p}_{boot}$ to also be 0 or 1, respectively. In these cases, our $SE(\hat{p}_{boot})$ will be 0, which will cause problems when calculating our $t$-statistic since we cannot divide by 0. In these cases, we will throw out these values. We see more of this with very low and very high values of $p$.
+We will have cases when $\hat{p}$ is either $0$ or $1$, which will cause $\hat{p}_{boot}$ to also be $0$ or $1$, respectively. In these cases, our $SE(\hat{p}_{boot})$ will be $0$, which will cause problems when calculating our $t$-statistic since we cannot divide by $0$. In these cases, we will throw out these values. We see more of this with very low and very high values of $p$.
 
 ```{r}
 # Function for the bootstrap interval (using parametric bootstrap)
@@ -587,18 +587,20 @@ tboot_df$prop_above    <- round(tboot_df$prop_above, 3)
 ```
 
 ```{r}
-### Display first 5 observations of each data frame
-head(wald_df, n = 5)
-head(adjwald_df, n = 5)
-head(clopper_df, n = 5)
-head(score_df, n = 5)
-head(rawboot_df, n = 5)
-head(tboot_df, n = 5)
+### Display first 10 observations of each data frame
+head(wald_df, n = 10)
+head(adjwald_df, n = 10)
+head(clopper_df, n = 10)
+head(score_df, n = 10)
+head(rawboot_df, n = 10)
+head(tboot_df, n = 10)
 ```
 
 \newpage
 
 # Examining the Different Methods Using Plots
+
+In this section, we will create plots of coverage probabilities as well as average interval width for each different confidence interval method.
 
 ## Wald Interval
 
@@ -848,7 +850,11 @@ tboot_avg_width_se
 
 # Examining the Different Methods Using Summary Statistics
 
+In this section, we will separate each data frame containing our final results into three separate data frames, one for each different value of $n$. We will then calculate the mean proportion of intervals that capture the true $p$ as well as the mean average width of the intervals for each value of $n$ for each confidence interval method.
+
 ## Wald Interval
+
+See below for results from the Wald interval.
 
 ```{r}
 # Separating the Wald results dataset by n values
@@ -882,6 +888,8 @@ We can see above that for the Wald interval with a sample size of $100$, our ave
 
 ## Adjusted Wald Interval
 
+See below for results from the Adjusted Wald interval.
+
 ```{r}
 # Separating the Adjusted Wald results dataset by n values
 adjwald_n15  <- adjwald_df %>% filter(n == 15)
@@ -913,6 +921,8 @@ c(adjwald_n100_mean_prop_captured, adjwald_n100_mean_avg_width)
 We can see above that for the Adjusted Wald interval with a sample size of $100$, our average proportion of intervals that capture the true $p$ is approximately $0.96$ or $96$% and the mean of the average widths is approximately $0.149$.
 
 ## Clopper-Pearson Interval
+
+See below for results from the Clopper-Pearson interval.
 
 ```{r}
 # Separating the Clopper-Pearson results dataset by n values
@@ -946,6 +956,8 @@ We can see above that for the Clopper-Pearson interval with a sample size of $10
 
 ## Score Interval
 
+See below for results from the Score interval.
+
 ```{r}
 # Separating the Score results dataset by n values
 score_n15  <- score_df %>% filter(n == 15)
@@ -978,6 +990,8 @@ We can see above that for the Score interval with a sample size of $100$, our av
 
 ## Raw Percentile Interval (Using a Parametric Bootstrap)
 
+See below for results from the bootstrap raw percentile interval.
+
 ```{r}
 # Separating the bootstrap raw percentile results dataset by n values
 rawboot_n15  <- rawboot_df %>% filter(n == 15)
@@ -1009,6 +1023,8 @@ c(rawboot_n100_mean_prop_captured, rawboot_n100_mean_avg_width)
 We can see above that for the bootstrap raw percentile interval with a sample size of $100$, our average proportion of intervals that capture the true $p$ is approximately $0.883$ or $88.3$% and the mean of the average widths is approximately $0.138$.
 
 ## Bootstrap t Interval (Using a Parametric Bootstrap)
+
+See below for results from the bootstrap t interval.
 
 ```{r}
 # Separating the bootstrap t interval results dataset by n values
